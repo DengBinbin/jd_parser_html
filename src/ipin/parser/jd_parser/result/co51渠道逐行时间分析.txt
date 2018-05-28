@@ -1,0 +1,211 @@
+Wrote profile results to time_profile.py.lprof
+Timer unit: 1e-06 s
+
+Total time: 0.093112 s
+File: co_parser_51job.py
+Function: preprocess at line 40
+
+Line #      Hits         Time  Per Hit   % Time  Line Contents
+==============================================================
+    40                                               @profile
+    41                                               def preprocess(self, htmlContent=None, fname=None, url=None):
+    42                                                   '''
+    43                                           
+    44                                                   Args:
+    45                                                       htmlContent: html文本
+    46                                                       fname: 文件名
+    47                                                       url: url链接
+    48                                           
+    49                                                   Returns:
+    50                                           
+    51                                                   '''
+    52                                           
+    53         1          110    110.0      0.1          self.refresh()
+    54         1            1      1.0      0.0          if url != None:
+    55                                                       # print "url"
+    56                                                       # urlopen有时候会出现104错误，原因未知，用requests来代替即可
+    57                                                       # html = urlopen(url).read()
+    58                                                       # html=unicode(html,'gb18030',errors='ignore')
+    59                                                       res = requests.get(url)
+    60                                                       res.encoding = 'gb18030'
+    61                                                       html = res.text
+    62                                           
+    63         1            0      0.0      0.0          elif htmlContent:
+    64                                                       # print "html"
+    65                                           
+    66         1            0      0.0      0.0              html = htmlContent
+    67                                                   elif fname:
+    68                                                       # print "file"
+    69                                                       html = codecs.open(fname, "rb", 'gb18030').read()
+    70                                           
+    71         1            1      1.0      0.0          if len(html) < 60:
+    72                                                       raise Exception("input arguments error")
+    73                                           
+    74                                           
+    75                                           
+    76                                                   # 换行符问题
+    77         1          674    674.0      0.7          self.html = re.sub("<br.*?/?>|<BR.*?/?>|<br>|<li>", "\n", html)
+    78         1        73482  73482.0     78.9          self.soup = BeautifulSoup(self.html, "lxml",from_encoding="utf-8")
+    79                                           
+    80                                           
+    81                                           
+    82                                           
+    83         1         8332   8332.0      8.9          self.basicsoup = self.soup.find("div","tCompanyPage")
+    84         1          355    355.0      0.4          self.compsoup = self.basicsoup.find("div","tHeader tHCop")
+    85         1          620    620.0      0.7          self.jdstr = self.basicsoup.find("div","tCompany_full")
+    86         1         9537   9537.0     10.2          self.photosoup = self.jdstr.find("div","tImgShow clearfix")
+
+Total time: 0.000556 s
+File: co_parser_51job.py
+Function: regular_incname at line 97
+
+Line #      Hits         Time  Per Hit   % Time  Line Contents
+==============================================================
+    97                                               @profile
+    98                                               #incName、incAliasName
+    99                                               def regular_incname(self):
+   100                                           
+   101         1            1      1.0      0.2          if self.compsoup:
+   102         1            1      1.0      0.2              incname = ""
+   103         1            1      1.0      0.2              incAliasName = ""
+   104         1           80     80.0     14.4              incname = self.compsoup.find("h1").get_text()
+   105                                                       incAliasName = self.jdstr.find("p","tPosition_center_bottomText").get_text().strip().split("：")[1] if \
+   106         1          467    467.0     84.0                              self.jdstr.find("p", "tPosition_center_bottomText").get_text().strip() else ""
+   107         1            5      5.0      0.9              self.result['coInc']['incName'] = incname.strip()
+   108         1            1      1.0      0.2              self.result['coInc']['incAliasName'] = incAliasName
+
+Total time: 0.00363 s
+File: co_parser_51job.py
+Function: regular_inc_tag at line 110
+
+Line #      Hits         Time  Per Hit   % Time  Line Contents
+==============================================================
+   110                                               @profile
+   111                                               # incType、incScale、incIndustry
+   112                                               def regular_inc_tag(self):
+   113                                           
+   114         1            1      1.0      0.0          if not self.compsoup:
+   115                                                       return
+   116         1          135    135.0      3.7          if  self.compsoup.find("p",'ltype'):
+   117         1          140    140.0      3.9              tags = self.compsoup.find("p",'ltype').get_text(strip=True).split(u"|")
+   118         1            1      1.0      0.0              if len(tags) == 3:
+   119                                                            self.result["coInc"]["incType"] = tags[0].strip()
+   120                                                            self.result["coInc"]["incScale"] = tags[1].strip()
+   121                                                            self.result["coInc"]["incIndustry"] = tags[-1].strip()
+   122                                                       else:
+   123         3            2      0.7      0.1                   for tag in tags:
+   124         2         2629   1314.5     72.4                       if re.search(u"公司|国企|外资|合资|外企", tag):
+   125         1            3      3.0      0.1                           self.result["coInc"]["incType"] = tag.strip()
+   126         1           98     98.0      2.7                       elif re.search(u"\d人", tag):
+   127         1            3      3.0      0.1                           self.result["coInc"]["incScale"] = tag.strip()
+   128                                                                # if tags and  not re.search(u"人|公司|国企",tags[-1]):
+   129         2          232    116.0      6.4                       if tags and not re.search(u"\d人|公司|国企", tags[-1]):
+   130                                                                    self.result["coInc"]["incIndustry"] = tags[-1].strip()
+   131                                           
+   132         1          370    370.0     10.2              find_inc_intro = self.compsoup.find_next("div", "tmsg inbox").find("div","in")
+   133         1            1      1.0      0.0              if find_inc_intro:
+   134                                           
+   135         1           13     13.0      0.4                  intro = find_inc_intro.get_text('\n').strip()
+   136                                                           # print intro
+   137         1            2      2.0      0.1                  self.result['coInc']['incIntro'] = intro
+
+Total time: 0.000899 s
+File: co_parser_51job.py
+Function: regular_incplace at line 139
+
+Line #      Hits         Time  Per Hit   % Time  Line Contents
+==============================================================
+   139                                               @profile
+   140                                               #incLocation、incZipCode、incCity
+   141                                               def regular_incplace(self):
+   142         1            0      0.0      0.0          incplace = ""
+   143         1            1      1.0      0.1          incZipCode = ""
+   144         1            1      1.0      0.1          resultList = []
+   145                                           
+   146         1          504    504.0     56.1          find_incplace = self.jdstr.find("span", "label", text=re.compile(u"公司地址："))
+   147         1            1      1.0      0.1          if find_incplace:
+   148         1           78     78.0      8.7              incplace = find_incplace.find_previous("p", "fp").get_text().strip()
+   149                                           
+   150         1            8      8.0      0.9              incZipCode = re.search(self.ZIP,incplace)
+   151         1            3      3.0      0.3              incplace = incplace[incplace.find(u"：") + 1:incplace.find('(')].strip()  # 去掉公司地址这几个字和后面的右边
+   152                                           
+   153         1            2      2.0      0.2              self.result['coInc']['incLocation'] = incplace
+   154         1            2      2.0      0.2              self.result['coInc']['incZipCode'] = incZipCode.group(0) if incZipCode else ""
+   155                                           
+   156        10          283     28.3     31.5          for word in jieba.cut(self.result['coInc']['incLocation']):
+   157         9            7      0.8      0.8              word = word.strip().lower()
+   158         9            4      0.4      0.4              if word in self.city_area:
+   159         1            0      0.0      0.0                  resultList.append(word)
+   160                                           
+   161                                                   # resultList[0]是所有提取出来的行政区划中最高级别的，如果这个级别至少是市级的
+   162         1            1      1.0      0.1          if resultList and resultList[0] in self.city_area:
+   163         1            0      0.0      0.0              if (len(resultList) >= 2):
+   164                                                           length = len(resultList)
+   165                                                           res = resultList[0]
+   166                                                           res += '-' + resultList[1]
+   167                                           
+   168                                                           if (resultList[0][:-1] == resultList[1]):
+   169                                                               resultList[1] = '-' + resultList[1]
+   170                                                               self.result['coInc']['incCity'] = re.sub(resultList[1], '', res)
+   171                                                           else:
+   172                                                               self.result['coInc']['incCity'] = res
+   173         1            1      1.0      0.1              elif (len(resultList) == 1):
+   174         1            3      3.0      0.3                  self.result['coInc']['incCity'] = resultList[0]
+   175                                                       else:
+   176                                                           self.result['coInc']['incCity'] = ""
+
+Total time: 0.009451 s
+File: co_parser_51job.py
+Function: regular_contactInfo at line 178
+
+Line #      Hits         Time  Per Hit   % Time  Line Contents
+==============================================================
+   178                                               @profile
+   179                                               #incContactEmail、incUrl
+   180                                               def regular_contactInfo(self):
+   181         1            3      3.0      0.0          if self.MAIL.findall(self.result["coInc"]["incIntro"]):
+   182                                                       self.result['coInc']["incContactEmail"] += " ".join(self.MAIL.findall(self.result["coInc"]["incIntro"]))
+   183         1         9448   9448.0    100.0          if self.jdstr.find("div","bmsg tmsg inbox"):
+   184                                                       self.result['coInc']['incUrl'] =  self.jdstr.find("div","bmsg tmsg inbox").find("a").get_text()
+
+Total time: 0.000161 s
+File: co_parser_51job.py
+Function: regular_inclogo at line 186
+
+Line #      Hits         Time  Per Hit   % Time  Line Contents
+==============================================================
+   186                                               @profile
+   187                                               def regular_inclogo(self):
+   188         1            1      1.0      0.6          self.logoName = None
+   189         1            0      0.0      0.0          self.photoName = None
+   190                                                   #公司logo
+   191         1          159    159.0     98.8          if self.compsoup.find("img","cimg"):
+   192                                                       logo_dir = self.job51_dir+'incLogo_51job/'
+   193                                                       if not os.path.exists(logo_dir):
+   194                                                           os.makedirs(logo_dir)
+   195                                                       logo_Url = self.compsoup.find("img","cimg").attrs["src"]
+   196                                                       logo_File = logo_dir + self.result['coInc']['incName'] + '.jpg'
+   197                                                       if not os.path.exists(logo_File):
+   198                                                           urllib.urlretrieve(logo_Url, filename=logo_File)
+   199                                                       self.result["coInc"]["incLogo"] = logo_File
+   200                                                   #招聘图片
+   201         1            1      1.0      0.6          if self.photosoup:
+   202                                                       photo_Files = []
+   203                                                       cnt = 0
+   204                                                       for photo in  self.photosoup.find_all("img"):
+   205                                                           #对于每个公司的图片，分开文件夹来进行存储
+   206                                                           photo_dir = self.job51_dir+'incPhoto_51job/'+self.result['coInc']['incName']+'/'
+   207                                                           if not os.path.exists(photo_dir):
+   208                                                               os.makedirs(photo_dir)
+   209                                                           #对于每张图，photo_Url是图片Url、photo_file是图片存在本地的地址
+   210                                                           photo_Url = photo.attrs["src"]
+   211                                                           photo_File = photo_dir + str(cnt) + '.jpg'
+   212                                                           photo_Files.append(photo_File)
+   213                                                           if not os.path.exists(photo_File):
+   214                                                               urllib.urlretrieve(photo_Url, filename=photo_File)
+   215                                           
+   216                                                           cnt+=1
+   217                                           
+   218                                                       self.result["coInc"]["incPhoto"] = photo_Files
+   219                                                       self.photoName = photo_Files
+

@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<meta charset="utf-8" >
+	<title>自动生成JD</title>
+	<link rel = "stylesheet" href="http://cdn.amazeui.org/amazeui/2.4.0/css/amazeui.min.css">
+    <link rel = "icon" href="head.ico" >
+
+    <style>
+        .hint {
+            color:#c60a00;
+        }
+        li {
+            list-style:none;
+        }
+    </style>
+
+    <script>
+        function get_result(){
+            document.getElementById("res_hint").innerHTML='<p class="am-active">正在生成结果，请稍等...'+'<i class="am-icon-spinner am-icon-spin"></i></p>';
+            document.getElementById("res_hint").style.color="#c60a00";
+            jobname = document.getElementById("jobname").value;
+            return true
+        }
+    </script>
+</head>
+<body>
+	<div class="am-topbar">
+	<h1 class="am-active">在线演示</h1>
+	</div>
+	<div class="am-g">
+		<div class="am-u-sm-8 am-u-sm-centered">
+            <div class="am-intro-left" style="height:180px">
+                <label class="am-active"><em>使用说明</em></label>
+                    <p class="am-serif">输入职位名和所需生成jd职责和要求句子数,再点击提交，可获得jd结果。</p><br />
+            </div>
+			<form class="am-form-inline" role="form" action="/genjd" method="post" onsubmit="return get_result()">
+                <input id="jobname" class="am-form-field am-radius" type="text" name="source" style="width:65%" placeholder="input jobname here" autofocus="True" value={{source}}></input>
+                <input id="num" class="am-form-field am-round" type="number" min="1" max="50" name="duty_num" style="width:10%" title="输入工作职责句子数" value={{duty_num}}></input>
+                <input id="num" class="am-form-field am-round" type="number" min="1" max="50" name="demand_num" style="width:10%" title="输入工作要求句子数" value={{demand_num}}></input>
+				<button type="submit" onclick="get_result()" class="am-btn am-btn-primary" value="submit">submit</button>
+			</form>
+		</div>
+		<br />
+		<div class="am-u-sm-8 am-u-sm-centered">
+		<div id='res_hint' class="am-active">生成结果: <a href="/jdparser" title="jd解析">JD解析</a></div>
+		<div id="result" style="background-color:#f8f8f8">
+            <p class="hint"><br/>工作职责:</p>
+            <ul>
+			{% for i,s in enumerate(result[0]) %}
+				<li>{{i+1}}. {{s}} </li>
+			{%end%}
+            </ul>
+            <p class='hint'>岗位要求:</p>
+            <ul>
+			{% for i,s in enumerate(result[1]) %}
+				<li>{{i+1}}. {{s}} </li>
+			{%end%}
+            </ul>
+            <br />
+    	</div>
+	<script type="text/javascript" src="http://cdn.amazeui.org/amazeui/2.4.0/js/amazeui.min.js"></script>
+</body>
+</html>

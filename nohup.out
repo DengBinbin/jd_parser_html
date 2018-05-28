@@ -1,0 +1,9 @@
+Building prefix dict from /usr/local/lib/python2.7/dist-packages/jieba/dict.txt ...
+Loading model from cache /tmp/jieba.cache
+Loading model cost 0.208 seconds.
+Prefix dict has been built succesfully.
+[I 160803 20:24:43 web:1946] 304 GET / (192.168.0.42) 7.41ms
+[I 160803 20:24:48 web:1946] 304 GET / (192.168.0.42) 2.80ms
+[I 160803 20:33:19 web:1946] 200 GET / (192.168.2.4) 2.66ms
+[W 160803 20:33:19 web:1946] 404 GET /head.ico (192.168.2.4) 1.68ms
+[W 160804 10:04:49 web:1946] 404 GET /head.ico (192.168.3.28) 0.72ms

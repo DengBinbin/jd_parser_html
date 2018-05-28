@@ -1,0 +1,1072 @@
+Wrote profile results to time_profile.py.lprof
+Timer unit: 1e-06 s
+
+Total time: 0.070129 s
+File: jd_parser_51job.py
+Function: preprocess at line 36
+
+Line #      Hits         Time  Per Hit   % Time  Line Contents
+==============================================================
+    36                                               @profile
+    37                                               def preprocess(self,htmlContent=None,fname=None,url=None):
+    38                                                   '''
+    39                                           
+    40                                                   Args:
+    41                                                       htmlContent: html文本
+    42                                                       fname: 文件名
+    43                                                       url: url链接
+    44                                           
+    45                                                   Returns:
+    46                                           
+    47                                                   '''
+    48                                           
+    49         1          176    176.0      0.3          self.refresh()
+    50         1            1      1.0      0.0          self.result["jdFrom"] = "51job"
+    51                                           
+    52         1            2      2.0      0.0          if url!=None:
+    53                                                       #print "url"
+    54                                                       #urlopen有时候会出现104错误，原因未知，用requests来代替即可
+    55                                                       # html = urlopen(url).read()
+    56                                                       # html=unicode(html,'gb18030',errors='ignore')
+    57                                                       res = requests.get(url)
+    58                                                       res.encoding = 'gb18030'
+    59                                                       html = res.text
+    60                                           
+    61         1            1      1.0      0.0          elif htmlContent:
+    62                                                       #print "html"
+    63                                           
+    64         1            1      1.0      0.0              html = htmlContent
+    65                                                   elif fname:
+    66                                                       #print "file"
+    67                                                       html = codecs.open(fname,"rb",'gb18030').read()
+    68                                           
+    69         1            1      1.0      0.0          if len(html)<60:
+    70                                                       raise Exception("input arguments error")
+    71                                           
+    72                                                   #换行符问题
+    73         1          708    708.0      1.0          self.html= re.sub("<br.*?/?>|<BR.*?/?>|<br>|<li>","\n",html)
+    74                                                   #print self.html
+    75         1        48943  48943.0     69.8          self.soup = BeautifulSoup(self.html,"lxml")
+    76         1         9197   9197.0     13.1          self.find_new_comp =  self.soup.find("div","tHeader tHjob") # 判断是否为新版本
+    77         1            2      2.0      0.0          if not self.find_new_comp:
+    78                                                       self.jdsoup = self.soup.find("div","tCompany_introduction")
+    79                                                       if not self.jdsoup:
+    80                                                           print "input arguments error"
+    81                                                           pass
+    82                                                       self.compsoup = self.soup.find("div","tBorderTop_box job_page_company")
+    83                                                       self.lineDl = self.jdsoup.find("div","tCompany_basic_job").find_all("dl","lineDl")# 为了方便取出表格基本信息
+    84                                                       self.jdstr = self.jdsoup.find("div","tCompany_text").get_text().strip()
+    85                                           
+    86                                                   else:
+    87         1          100    100.0      0.1              self.compsoup = self.find_new_comp.find("div","cn")
+    88         1         9697   9697.0     13.8              self.jdsoup = self.soup.find("div","tCompany_main")
+    89         1           83     83.0      0.1              self.basicsoup = self.jdsoup.find("div","jtag inbox")
+    90         1          304    304.0      0.4              self.lineDl = self.basicsoup.find("div","t1").find_all("span","sp4")
+    91         1          298    298.0      0.4              self.lineDl2 = self.basicsoup.find("div","t1").find_all("span","sp2")  # 语言要求，专业要求
+    92         1          542    542.0      0.8              self.jdstr = self.basicsoup.find_next("div","bmsg job_msg inbox").get_text().strip()
+    93         1           18     18.0      0.0          self.jdstr = self.CLEAN_TEXT.sub(" ",self.jdstr)
+    94        42           55      1.3      0.1          self.linelist = [line.strip() for line in self.SPLIT_LINE.split(self.jdstr) if len(line.strip()) > 3]
+
+Total time: 0.000202 s
+File: jd_parser_51job.py
+Function: regular_incname at line 96
+
+Line #      Hits         Time  Per Hit   % Time  Line Contents
+==============================================================
+    96                                               @profile
+    97                                               def regular_incname(self):
+    98         1            0      0.0      0.0          incname=""
+    99         1            1      1.0      0.5          if not self.find_new_comp and self.compsoup:
+   100                                                       incname = self.compsoup.find('h2').get_text()
+   101                                                   else:
+   102         1          197    197.0     97.5              incname =  self.compsoup.find("p","cname").get_text()
+   103         1            4      4.0      2.0          self.result['jdInc']['incName'] = incname.strip()
+
+Total time: 0.310739 s
+File: jd_parser_51job.py
+Function: regular_inc_tag at line 105
+
+Line #      Hits         Time  Per Hit   % Time  Line Contents
+==============================================================
+   105                                               @profile
+   106                                               def regular_inc_tag(self):
+   107                                           
+   108         1            2      2.0      0.0          if not self.compsoup:
+   109                                                       return
+   110         1            2      2.0      0.0          if self.find_new_comp:
+   111         1          278    278.0      0.1              if self.compsoup.find("p","msg ltype"):
+   112         1          280    280.0      0.1                  tags = self.compsoup.find("p","msg ltype").get_text(strip=True).split(u"|")
+   113         1            2      2.0      0.0                  if len(tags)==3:
+   114         1            4      4.0      0.0                      self.result["jdInc"]["incType"] = tags[0].strip()
+   115         1            2      2.0      0.0                      self.result["jdInc"]["incScale"] = tags[1].strip()
+   116         1            3      3.0      0.0                      self.result["jdInc"]["incIndustry"] = tags[-1].strip()
+   117                                                           else:
+   118                                                               for tag in tags:
+   119                                                                   if re.search(u"公司|国企|外资|合资|外企",tag):
+   120                                                                       self.result["jdInc"]["incType"] = tag.strip()
+   121                                                                   elif re.search(u"\d人",tag):
+   122                                                                       self.result["jdInc"]["incScale"] = tag.strip()
+   123                                                                   #if tags and  not re.search(u"人|公司|国企",tags[-1]):
+   124                                                                   if tags and  not re.search(u"\d人|公司|国企",tags[-1]):
+   125                                                                       self.result["jdInc"]["incIndustry"] = tags[-1].strip()
+   126                                           
+   127                                           
+   128         1         1633   1633.0      0.5              find_inc_intro = self.compsoup.find_next("div","tmsg inbox")
+   129         1            2      2.0      0.0              if find_inc_intro:
+   130                                                           #dengbinbin
+   131         1           11     11.0      0.0                  intro = find_inc_intro.get_text('\n').strip()
+   132                                                           #print intro
+   133         1            3      3.0      0.0                  self.result['jdInc']['incIntro'] = intro
+   134         1            9      9.0      0.0                  intro = find_inc_intro.get_text('\n').strip().split('\n')
+   135                                           
+   136                                                           #新公司信息
+   137                                           
+   138                                           
+   139         1         3263   3263.0      1.1                  regex_contactInfo = re.compile(u'联络方式|联络电话|固定电话|固话|电话|联系电话|微信|QQ|联系方式|传真|Tel')
+   140         1          274    274.0      0.1                  regex_contactName = re.compile(u'联络|联系人$|联络人')
+   141         1         2709   2709.0      0.9                  regex_number = re.compile(u'(?<=[^-Q/——_ 0123456789])([-/_ ——0123456789]{7,})')
+   142         1          486    486.0      0.2                  regex_QQ = re.compile(u'QQ\d{6,}|QQ|qq')
+   143         1         4977   4977.0      1.6                  regex_punction = re.compile(u'[\],.;:，、。（）《》【】！#……()<>；“”'']')
+   144         5            7      1.4      0.0                  for line in intro:
+   145         4            4      1.0      0.0                      if line:
+   146         4           87     21.8      0.0                          line = re.sub(u':', u'：', line)
+   147         4           78     19.5      0.0                          line = re.sub(u'：', u' ： ', line)
+   148                                           
+   149         4            6      1.5      0.0                          contactInfo = u''
+   150         4            5      1.2      0.0                          contactName = u''
+   151                                           
+   152         4         2826    706.5      0.9                          if re.search(u'联络方式|微信 ：|联络电话|联系电话 ：|电话 ：|联系方式 ：|传真 ：|Tel ：', line) \
+   153         4         2210    552.5      0.7                                  or re.search(u'联系人 ：|联络 ：|人员 ：|联络人', line):
+   154                                           
+   155                                                                       line = replace_space(line)
+   156                                                                       line = line.strip().split(u' ')
+   157                                                                       index = [index for (index, i) in enumerate(line) if i == u'：']
+   158                                                                       for i in range(len(index)):
+   159                                                                           # 只要不是最后一个冒号
+   160                                                                           if i != len(index) - 1:
+   161                                                                               if re.search(regex_contactInfo, line[index[i] - 1]) or re.search(regex_QQ,
+   162                                                                                                                                                line[index[i] - 1]):
+   163                                                                                   for j in range(index[i] - 1, index[i + 1] - 1):
+   164                                                                                       if len(line[j]) > 40 and not re.search(regex_number, line[j]):
+   165                                                                                           if len(re.findall(regex_punction, line[j])) > 0:
+   166                                                                                               last_punction = re.findall(regex_punction, line[j])[-1]
+   167                                                                                               line[j] = line[j].split(last_punction)[-1]
+   168                                           
+   169                                                                                               contactInfo += line[j] + u' '
+   170                                                                                       elif re.search(regex_QQ, line[j]):
+   171                                                                                           contactInfo += line[j] + u' '
+   172                                                                                       else:
+   173                                                                                           contactInfo += line[j] + u' '
+   174                                           
+   175                                                                               elif re.search(regex_contactName, line[index[i] - 1]):
+   176                                                                                   for j in range(index[i] + 1, index[i + 1] - 1):
+   177                                                                                       if len(line[j]) > 40 and not re.search(regex_number, line[j]):
+   178                                                                                           if len(re.findall(regex_punction, line[j])) > 0:
+   179                                                                                               last_punction = re.findall(regex_punction, line[j])[-1]
+   180                                                                                               line[j] = line[j].split(last_punction)[-1]
+   181                                           
+   182                                                                                               contactName += line[j] + u' '
+   183                                                                                       else:
+   184                                                                                           contactName += line[j] + u' '
+   185                                                                           # 是最后一个冒号
+   186                                                                           else:
+   187                                                                               if re.search(regex_contactInfo, line[index[i] - 1]) or re.search(regex_QQ,
+   188                                                                                                                                                line[index[i] - 1]):
+   189                                                                                   for j in range(index[i] - 1, len(line)):
+   190                                                                                       if len(line[j]) > 40 and not re.search(regex_number, line[j]):
+   191                                                                                           if len(re.findall(regex_punction, line[j])) > 0:
+   192                                                                                               last_punction = re.findall(regex_punction, line[j])[-1]
+   193                                                                                               line[j] = line[j].split(last_punction)[-1]
+   194                                                                                               contactInfo += line[j] + u' '
+   195                                                                                       elif re.search(regex_QQ, line[j]):
+   196                                                                                           contactInfo += line[j] + u' '
+   197                                                                                       else:
+   198                                                                                           contactInfo += line[j] + u' '
+   199                                                                               elif re.search(regex_contactName, line[index[i] - 1]):
+   200                                                                                   for j in range(index[i] + 1, len(line)):
+   201                                                                                       if len(line[j]) > 40 and not re.search(regex_number, line[j]):
+   202                                                                                           if len(re.findall(regex_punction, line[j])) > 0:
+   203                                                                                               last_punction = re.findall(regex_punction, line[j])[-1]
+   204                                                                                               line[j] = line[j].split(last_punction)[-1]
+   205                                           
+   206                                                                                               contactName += line[j] + u' '
+   207                                                                                       else:
+   208                                                                                           contactName += line[j] + u' '
+   209                                           
+   210                                                                       if re.search(regex_number, contactName) or re.search(u'\d{11}', contactName):
+   211                                                                           # print "contactName have tel"
+   212                                                                           tel = ""
+   213                                                                           find_tel = re.findall(regex_number, contactName)
+   214                                           
+   215                                                                           if find_tel == []:
+   216                                                                               find_tel = re.findall(u'\d{11}', contactName)
+   217                                                                           for index in range(len(find_tel)):
+   218                                                                               tel = find_tel[index] + u' '
+   219                                                                               contactName = re.sub(find_tel[index], u'', contactName)
+   220                                                                               contactInfo += tel + u' '
+   221                                                                       if re.search(regex_QQ, contactName):
+   222                                                                           # print "contactName have QQ"
+   223                                                                           QQ = ""
+   224                                                                           find_QQ = re.findall(regex_QQ, contactName)
+   225                                                                           for index in range(len(find_QQ)):
+   226                                                                               QQ += find_QQ[index] + u' '
+   227                                                                               contactName = re.sub(find_QQ[index], u'', contactName)
+   228                                                                           contactInfo += QQ + u' '
+   229                                                                       contactInfo = replace_space(contactInfo).strip()
+   230                                                                       contactName = re.sub(regex_punction, u'', contactName)
+   231                                                                       contactInfo = re.sub(u' ： ', u'：', contactInfo)
+   232                                                                       contactName = re.sub(u' ： ', u'：', contactName)
+   233                                                                       self.result['jdInc']['incContactInfo'] += contactInfo+u' '
+   234                                                                       self.result['jdInc']['incContactName'] += contactName +u' '
+   235                                                                       contactInfo = u''
+   236                                                                       contactName = u''
+   237                                                                       # print "ContactInfo:", self.result['jdInc']['incContactInfo']
+   238                                                                       # print "ContactName:", self.result['jdInc']["incContactName"]
+   239                                           
+   240                                           
+   241                                           
+   242                                           
+   243                                           
+   244                                           
+   245                                           
+   246         1          242    242.0      0.1                  find_inc_url = self.compsoup.find("p","cname").find("a")
+   247         1            2      2.0      0.0                  if find_inc_url:
+   248         1          361    361.0      0.1                      self.inc_url=self.compsoup.find("p","cname").find("a").get("href")
+   249                                           
+   250                                           
+   251         1          159    159.0      0.1              find_inc_location = self.compsoup.find("span","lname")
+   252         1            2      2.0      0.0              if find_inc_location:
+   253         1           11     11.0      0.0                  self.result["jdJob"]["jobWorkCity"] = find_inc_location.get_text().strip()
+   254                                           
+   255                                           
+   256                                                   #下面是没找到inc_intro时候的解决方法
+   257                                                   else:
+   258                                           
+   259                                                       inc_tags = self.compsoup.find_all("dl","lineDl")
+   260                                                       for tag in inc_tags:
+   261                                                           key = tag.find('dt').get_text()
+   262                                                           if re.search(u"行业",key):
+   263                                                               self.result["jdInc"]["incIndustry"] = tag.find("dd").get_text().strip()
+   264                                                           elif re.search(u"性质",key):
+   265                                                               self.result["jdInc"]["incType"]=tag.find("dd").get_text().strip()
+   266                                                           elif re.search(u"规模",key):
+   267                                                               self.result["jdInc"]["incScale"] = tag.find("dd").get_text().strip()
+   268                                                           elif re.search(u"地址",key):
+   269                                           
+   270                                                               self.result["jdJob"]["jobWorkCity"] = tag.find("p",{"class":"job_company_text"}).get_text().strip()
+   271                                           
+   272                                                           elif re.search(u"公司网站",key):
+   273                                                               self.result["jdInc"]["incUrl"] = tag.find("dd").get_text().strip()
+   274                                                       if re.search(u"公司介绍",self.html) and self.soup.find("div","tCompany_text_gsjs"):
+   275                                                           self.result["jdInc"]["incIntro"] = self.soup.find("div","tCompany_text_gsjs").get_text('\n').strip().strip()
+   276                                           
+   277                                                           incUrl = self.INC_URL.search(self.result["jdInc"]["incIntro"])
+   278                                                           if not self.result["jdInc"]["incUrl"] and incUrl:
+   279                                                               self.result["jdInc"]["incUrl"] = re.search("[\w\d\./_:\-]+",incUrl.group()).group()
+   280                                                   #51job公司主页解析
+   281         1            2      2.0      0.0          if self.inc_url:
+   282                                           
+   283                                           
+   284         1            2      2.0      0.0              try:
+   285                                                           #opener = urllib2.build_opener(urllib2.HTTPCookieProcessor())
+   286                                                           #html = opener.open(self.inc_url).read().decode('gb18030')
+   287         1       133867 133867.0     43.1                  res = requests.get(self.inc_url)
+   288         1            2      2.0      0.0                  res.encoding = 'gb18030'
+   289         1          776    776.0      0.2                  html = res.text
+   290                                           
+   291                                                       except SocketError as e:
+   292                                                           # if e.errno != errno.ECONNRESET:
+   293                                                           #    raise
+   294                                                           print e
+   295                                                       except ConnectionError as err:
+   296                                                           print err
+   297                                                       else:
+   298         1       119900 119900.0     38.6                  soup = BeautifulSoup(html, "lxml")
+   299         1        15344  15344.0      4.9                  rows = soup.find("div", {"class": "tCompany_full"}).find_all("span", {"class": "label"})
+   300         1         9890   9890.0      3.2                  find_inc_aliasName = soup.find("p", "tPosition_center_bottomText")
+   301         1            2      2.0      0.0                  if find_inc_aliasName:
+   302                                                               incAliasName = soup.find("p", "tPosition_center_bottomText").get_text().strip().split('：')[1] if \
+   303         1         9901   9901.0      3.2                          soup.find("p", "tPosition_center_bottomText").get_text().strip() else ""
+   304                                                           else:
+   305                                                               incAliasName = ""
+   306         1            6      6.0      0.0                  self.result['jdInc']['incAliasName'] = incAliasName
+   307         3            4      1.3      0.0                  for row in rows:
+   308         2          165     82.5      0.1                      if re.search(u"公司地址", row.get_text()):
+   309                                                                   #add incZipcode
+   310         1           14     14.0      0.0                          info = row.parent.get_text()
+   311         1          270    270.0      0.1                          if re.search(u"邮编：(\d{6})", info):
+   312         1            9      9.0      0.0                              self.result["jdInc"]["incZipCode"] = re.search(u"邮编：(\d{6})",info).group(1)
+   313         1          377    377.0      0.1                          self.result['jdInc']["incLocation"] = re.sub(u"\s+|\(邮编：\d{6}\)", u'', row.parent.get_text())[
+   314         1            5      5.0      0.0                                                                5:]
+   315                                           
+   316         1          116    116.0      0.0                      elif re.search(u"公司官网", row.get_text()):
+   317                                           
+   318         1          147    147.0      0.0                          self.result['jdInc']['incUrl'] = re.sub(u"\s+", u'', row.parent.get_text())[5:]
+
+Total time: 3e-06 s
+File: jd_parser_51job.py
+Function: regular_pubtime at line 320
+
+Line #      Hits         Time  Per Hit   % Time  Line Contents
+==============================================================
+   320                                               @profile
+   321                                               def regular_pubtime(self):
+   322                                                   """
+   323                                                   发布时间 & 截止时间
+   324                                                   """
+   325                                           
+   326         1            0      0.0      0.0          pubTime =""
+   327         1            1      1.0     33.3          if not self.find_new_comp:
+   328                                                       pubTime = self.jdsoup.find("div","tCompany_basic_job").dd.get_text().strip()
+   329         1            2      2.0     66.7          self.result["pubTime"] = pubTime
+
+Total time: 0.002458 s
+File: jd_parser_51job.py
+Function: regular_jobname at line 331
+
+Line #      Hits         Time  Per Hit   % Time  Line Contents
+==============================================================
+   331                                               @profile
+   332                                               def regular_jobname(self):
+   333         1            1      1.0      0.0          jobname = u""
+   334         1            1      1.0      0.0          if self.find_new_comp:
+   335         1           73     73.0      3.0              jobname = self.compsoup.find("h1").get_text().strip()
+   336         1         2245   2245.0     91.3              find_job_type = re.search(u"实习|兼职|全职",jobname)
+   337         1            1      1.0      0.0              if find_job_type:
+   338                                                           self.result["jdJob"]["jobType"] = find_job_type.group()
+   339                                                   else:
+   340                                                       jobname = self.jdsoup.find("li","tCompany_job_name").find('h1').get_text()
+   341                                           
+   342         1          137    137.0      5.6          self.result["jdJob"]["jobPosition"] = re.sub("\s+","",jobname.strip())
+
+Total time: 0.009529 s
+File: jd_parser_51job.py
+Function: regular_job_tag at line 344
+
+Line #      Hits         Time  Per Hit   % Time  Line Contents
+==============================================================
+   344                                               @profile
+   345                                               def regular_job_tag(self):
+   346                                           
+   347         1         2675   2675.0     28.1          intro=self.job_desc_process(self.jdstr)
+   348         1            4      4.0      0.0          self.result['jdJob']['jobDesc'] = intro
+   349                                                   # intro = intro.split('\n')
+   350                                                   # intro = [x for x in intro if x != '' and x != u''and x!=u' ']
+   351                                                   #
+   352                                                   # for item in intro[:-1]:
+   353                                                   #     self.result["jdJob"]["jobDesc"] += item + '\t'
+   354                                                   # self.result["jdJob"]["jobDesc"] += intro[-1]
+   355                                           
+   356         1            2      2.0      0.0          if self.find_new_comp:
+   357         1           43     43.0      0.5              intro = self.job_desc_process(self.jdstr).split('\n')
+   358                                                       # 新职位信息
+   359         1         3231   3231.0     33.9              regex_contactInfo = re.compile(u'联络方式|联络电话|固定电话|固话|电话|联系电话|微信|QQ|联系方式|传真|Tel')
+   360         1            5      5.0      0.1              regex_contactName = re.compile(u'联络|联系人$|联络人')
+   361         1            4      4.0      0.0              regex_number = re.compile(u'(?<=[^-Q/——_ 0123456789])([-/_ ——0123456789]{7,})')
+   362         1            3      3.0      0.0              regex_QQ = re.compile(u'QQ\d{6,}|QQ|qq')
+   363         1            3      3.0      0.0              regex_punction = re.compile(u'[\],.;:，、。（）《》【】！#……()<>；“”'']')
+   364        18           15      0.8      0.2              for line in intro:
+   365        17           16      0.9      0.2                  if line:
+   366        12           40      3.3      0.4                      line = re.sub(u':', u'：', line)
+   367        12           41      3.4      0.4                      line = re.sub(u'：', u' ： ', line)
+   368                                           
+   369        12           11      0.9      0.1                      contactInfo = u''
+   370        12           12      1.0      0.1                      contactName = u''
+   371                                           
+   372        12           42      3.5      0.4                      if re.search(u'联络方式|微信 ：|联络电话|联系电话 ：|电话 ：|联系方式 ：|传真 ：|Tel ：', line) \
+   373        12           38      3.2      0.4                              or re.search(u'联系人 ：|联络 ：|人员 ：|联络人', line):
+   374                                           
+   375                                                                   line = replace_space(line)
+   376                                                                   line = line.strip().split(u' ')
+   377                                                                   index = [index for (index, i) in enumerate(line) if i == u'：']
+   378                                                                   for i in range(len(index)):
+   379                                                                       # 只要不是最后一个冒号
+   380                                                                       if i != len(index) - 1:
+   381                                                                           if re.search(regex_contactInfo, line[index[i] - 1])or re.search(regex_QQ, line[index[i] - 1]) :
+   382                                                                               for j in range(index[i] - 1, index[i + 1] - 1):
+   383                                                                                   if len(line[j]) > 40 and not re.search(regex_number, line[j]):
+   384                                                                                       if len(re.findall(regex_punction, line[j]))>0:
+   385                                                                                           last_punction = re.findall(regex_punction, line[j])[-1]
+   386                                                                                           line[j] = line[j].split(last_punction)[-1]
+   387                                           
+   388                                                                                           contactInfo += line[j] + u' '
+   389                                                                                   elif re.search(regex_QQ,line[j]):
+   390                                                                                       contactInfo+=line[j]+u' '
+   391                                                                                   else:
+   392                                                                                       contactInfo += line[j] + u' '
+   393                                           
+   394                                                                           elif re.search(regex_contactName, line[index[i] - 1]):
+   395                                                                               for j in range(index[i]+1, index[i + 1] - 1):
+   396                                                                                   if len(line[j]) > 40 and not re.search(regex_number, line[j]):
+   397                                                                                       if len(re.findall(regex_punction, line[j])) > 0:
+   398                                                                                           last_punction = re.findall(regex_punction, line[j])[-1]
+   399                                                                                           line[j] = line[j].split(last_punction)[-1]
+   400                                           
+   401                                                                                           contactName += line[j] + u' '
+   402                                                                                   else:
+   403                                                                                       contactName += line[j] + u' '
+   404                                                                       # 是最后一个冒号
+   405                                                                       else:
+   406                                                                           if re.search(regex_contactInfo, line[index[i] - 1]) or re.search(regex_QQ, line[index[i] - 1]) :
+   407                                                                               for j in range(index[i] - 1, len(line)):
+   408                                                                                   if len(line[j]) > 40 and not re.search(regex_number, line[j]):
+   409                                                                                       if len(re.findall(regex_punction, line[j])) > 0:
+   410                                                                                           last_punction = re.findall(regex_punction, line[j])[-1]
+   411                                                                                           line[j] = line[j].split(last_punction)[-1]
+   412                                                                                           contactInfo += line[j] + u' '
+   413                                                                                   elif re.search(regex_QQ, line[j]):
+   414                                                                                       contactInfo += line[j] + u' '
+   415                                                                                   else:
+   416                                                                                       contactInfo += line[j] + u' '
+   417                                                                           elif re.search(regex_contactName, line[index[i] - 1]):
+   418                                                                               for j in range(index[i]+1 , len(line)):
+   419                                                                                   if len(line[j]) > 40 and not re.search(regex_number, line[j]):
+   420                                                                                       if len(re.findall(regex_punction, line[j])) > 0:
+   421                                                                                           last_punction = re.findall(regex_punction, line[j])[-1]
+   422                                                                                           line[j] = line[j].split(last_punction)[-1]
+   423                                           
+   424                                                                                           contactName += line[j] + u' '
+   425                                                                                   else:
+   426                                                                                       contactName += line[j] + u' '
+   427                                           
+   428                                                                   if re.search(regex_number, contactName)or re.search(u'\d{11}',contactName):
+   429                                                                       #print "contactName have tel"
+   430                                                                       tel = ""
+   431                                                                       find_tel = re.findall(regex_number, contactName)
+   432                                           
+   433                                                                       if find_tel==[]:
+   434                                                                           find_tel = re.findall(u'\d{11}', contactName)
+   435                                                                       for index in range(len(find_tel)):
+   436                                                                           tel = find_tel[index] + u' '
+   437                                                                           contactName = re.sub(find_tel[index], u'', contactName)
+   438                                                                           contactInfo += tel + u' '
+   439                                                                   if re.search(regex_QQ, contactName):
+   440                                                                       #print "contactName have QQ"
+   441                                                                       QQ = ""
+   442                                                                       find_QQ = re.findall(regex_QQ, contactName)
+   443                                                                       for index in range(len(find_QQ)):
+   444                                                                           QQ += find_QQ[index] + u' '
+   445                                                                           contactName = re.sub(find_QQ[index], u'', contactName)
+   446                                                                       contactInfo += QQ + u' '
+   447                                                                   contactInfo = replace_space(contactInfo).strip()
+   448                                                                   contactName = re.sub(regex_punction, u'', contactName)
+   449                                                                   contactInfo = re.sub(u' ： ', u'：', contactInfo)
+   450                                                                   contactName = re.sub(u' ： ', u'：', contactName)
+   451                                                                   self.result['jdInc']['incContactInfo'] += contactInfo
+   452                                                                   self.result['jdInc']['incContactName'] += contactName
+   453                                                                   contactInfo = u''
+   454                                                                   contactName = u''
+   455                                           			
+   456                                                                   # print "ContactInfo:", self.result['jdInc']['incContactInfo']
+   457                                                                   # print "ContactName:", self.result['jdInc']["incContactName"]
+   458                                           
+   459                                           	
+   460         4            5      1.2      0.1              for line in self.lineDl:
+   461         3          117     39.0      1.2                  if re.search(u"经验",line.get_text()):
+   462                                                               self.result["jdJob"]["jobWorkAge"] = line.get_text().strip()
+   463         3           24      8.0      0.3                  elif self.DEGREE.search(line.get_text()):
+   464         1            9      9.0      0.1                      self.result["jdJob"]["jobDiploma"] = line.get_text().strip()
+   465         2         2041   1020.5     21.4                  elif re.search(u"招聘|人",line.get_text()):
+   466         1           11     11.0      0.1                      self.result["jdJob"]["jobNum"] = line.get_text()
+   467         1           88     88.0      0.9                  elif re.search(u"发布",line.get_text()):
+   468         1           10     10.0      0.1                      self.result["pubTime"] = line.get_text().strip()
+   469                                           
+   470         1          993    993.0     10.4              find_job_cate = self.basicsoup.find_next("div","bmsg job_msg inbox").find("span","label",text=re.compile(u"职能类别"))
+   471         1            2      2.0      0.0              if find_job_cate:
+   472         3           40     13.3      0.4                  tags = [tag.get_text() for tag in find_job_cate.find_next_siblings("span")]
+   473         1            4      4.0      0.0                  self.result["jdJob"]["jobCate"] = ' | '.join(tags)
+   474                                           
+   475                                                   else:
+   476                                           
+   477                                                       for line in self.lineDl:
+   478                                                           for tag in line.find_all("dt"):
+   479                                                               if re.search(u"招聘人数",tag.get_text()):
+   480                                                                   self.result["jdJob"]["jobNum"] = tag.findNext("dd").get_text().strip()
+   481                                           
+   482                                                       for line in self.lineDl:
+   483                                                           if re.search(u"职能类别",line.dt.get_text()):
+   484                                                               self.result["jdJob"]["jobCate"] =  " | ".join(line.dd.get_text().split())
+   485                                                           if re.search(u"职位标签",line.dt.get_text()):
+   486                                                               if re.search(u"实习|兼职",line.dd.get_text()):
+   487                                                                   self.result["jdJob"]["jobType"] = u"实习"
+   488                                                               elif re.search(u"全职",line.dd.get_text()):
+   489                                                                   self.result["jdJob"]["jobType"] = u"全职"
+
+Total time: 0 s
+File: jd_parser_51job.py
+Function: regular_sex at line 493
+
+Line #      Hits         Time  Per Hit   % Time  Line Contents
+==============================================================
+   493                                               @profile
+   494                                               def regular_sex(self):
+   495                                                   """
+   496                                                   不限
+   497                                                   男
+   498                                                   女
+   499                                                   """
+   500                                                   res = u"不限"
+   501                                                   for line in self.linelist:
+   502                                                           if re.search(u"性别不限|男女不限",line):
+   503                                                               res = u"不限"
+   504                                                           elif re.search(u"男",line):
+   505                                                               res = u"男"
+   506                                                           elif re.search(u"女",line):
+   507                                                               res = u"女"
+   508                                                           break
+   509                                           
+   510                                                   self.result['jdJob']["gender"] = str(res)
+
+Total time: 0 s
+File: jd_parser_51job.py
+Function: regular_age at line 512
+
+Line #      Hits         Time  Per Hit   % Time  Line Contents
+==============================================================
+   512                                               @profile
+   513                                               def regular_age(self):
+   514                                                   """
+   515                                                   (minage,maxage)
+   516                                                   """
+   517                                                   agestr = u"不限"
+   518                                                   for line in self.linelist:
+   519                                                       if re.search(u"\d+后",line):continue
+   520                                                       if self.AGE.search(line):
+   521                                                           findage = re.search(u"\d{2}?\s?[\-－　到至\s]?\d{2}周?岁|(至少|不低于|不超过|不大于|大概|大约|不少于|大于)\d+周?岁|\d+周岁(以上|左右|以下)|年龄.{2,9}",line)
+   522                                                           if findage:
+   523                                                               agestr = findage.group()
+   524                                                   self.result["jdJob"]["age"] = agestr
+
+Total time: 3e-06 s
+File: jd_parser_51job.py
+Function: regular_major at line 526
+
+Line #      Hits         Time  Per Hit   % Time  Line Contents
+==============================================================
+   526                                               @profile
+   527                                               def regular_major(self):
+   528         1            1      1.0     33.3          res = []
+   529         1            1      1.0     33.3          if self.find_new_comp:
+   530         1            0      0.0      0.0              for line in self.lineDl2:
+   531                                                           if line.find("em","i6"):
+   532                                                               res = line.get_text().strip().split()
+   533                                           
+   534         1            1      1.0     33.3          self.result['jdJob']["jobMajorList"] = res
+
+Total time: 0 s
+File: jd_parser_51job.py
+Function: regular_major_detail at line 536
+
+Line #      Hits         Time  Per Hit   % Time  Line Contents
+==============================================================
+   536                                               @profile
+   537                                               def regular_major_detail(self):
+   538                                                   res = []
+   539                                                   if self.find_new_comp:
+   540                                                       for line in self.lineDl2:
+   541                                                           if line.find("em","i6"):
+   542                                                               res = line.get_text().strip().split()
+   543                                                   if not res:
+   544                                                       for line in self.linelist:
+   545                                                           for word in jieba.cut(line):
+   546                                                               word = word.strip().lower()
+   547                                                               if word in self.majordic:
+   548                                                                   res.append(word)
+   549                                           
+   550                                                   self.result["jdJob"]["jobMajorList"] = list(set(res))
+
+Total time: 1e-06 s
+File: jd_parser_51job.py
+Function: regular_degree at line 552
+
+Line #      Hits         Time  Per Hit   % Time  Line Contents
+==============================================================
+   552                                               @profile
+   553                                               def regular_degree(self):
+   554         1            0      0.0      0.0          res = ""
+   555         1            1      1.0    100.0          if not self.find_new_comp:
+   556                                                       line = self.lineDl[1]
+   557                                                       for tag in line.find_all("dt"):
+   558                                                           if re.search(u"学历要求",tag.get_text()):
+   559                                                               res = tag.findNext("dd").get_text()
+   560                                                               self.result['jdJob']['jobDiploma'] = res
+   561                                                               break
+
+Total time: 2e-06 s
+File: jd_parser_51job.py
+Function: regular_language at line 563
+
+Line #      Hits         Time  Per Hit   % Time  Line Contents
+==============================================================
+   563                                               @profile
+   564                                               def regular_language(self):
+   565                                           
+   566                                           
+   567                                                   #根据网页icon获取语言信息
+   568         1            1      1.0     50.0          if self.find_new_comp:
+   569         1            0      0.0      0.0              for line in self.lineDl2:
+   570                                                           if line.em.get("class")[0]==u"i5":
+   571                                                               self.result['others']["language"] = line.get_text()
+   572                                                               return
+   573         1            0      0.0      0.0          if self.find_new_comp:
+   574         1            1      1.0     50.0              for line in self.lineDl2:
+   575                                                           if re.search(u"好|语言",line.get_text()):
+   576                                                               res = line.get_text().strip()
+   577                                                               self.result['others']["language"] = res
+   578                                                               break
+
+Total time: 1e-06 s
+File: jd_parser_51job.py
+Function: regular_exp at line 580
+
+Line #      Hits         Time  Per Hit   % Time  Line Contents
+==============================================================
+   580                                               @profile
+   581                                               def regular_exp(self):
+   582         1            0      0.0      0.0          expstr =""
+   583         1            1      1.0    100.0          if not self.find_new_comp:
+   584                                                       for line in self.lineDl:
+   585                                                           if re.search(u"工作年限",line.dt.get_text()):
+   586                                                               expstr = line.dd.get_text().strip()
+   587                                                               self.result['jdJob']["jobWorkAge"] = expstr
+   588                                                               break
+
+Total time: 0 s
+File: jd_parser_51job.py
+Function: regular_skill at line 590
+
+Line #      Hits         Time  Per Hit   % Time  Line Contents
+==============================================================
+   590                                               @profile
+   591                                               def regular_skill(self):
+   592                                                   res = {}
+   593                                                   for line in self.linelist:
+   594                                                       for word in jieba.cut(line):
+   595                                                           word = word.lower()
+   596                                                           if word in self.skilldic:
+   597                                                               res.setdefault(word,1)
+   598                                                               res[word] += 1
+   599                                           
+   600                                                   sorted_res = sorted(res.items(),key = lambda d:d[1],reverse=True)
+   601                                           
+   602                                                   res =[w[0] for w in sorted_res[:5] ]
+   603                                                   self.result["jdJob"]["skillList"] = res
+
+Total time: 0.001636 s
+File: jd_parser_51job.py
+Function: regular_workplace at line 605
+
+Line #      Hits         Time  Per Hit   % Time  Line Contents
+==============================================================
+   605                                               @profile
+   606                                               def regular_workplace(self):
+   607         1            1      1.0      0.1          res = ""
+   608         1            1      1.0      0.1          resultList = []
+   609         1            1      1.0      0.1          if self.find_new_comp:
+   610         1         1274   1274.0     77.9              find_workplace = self.jdsoup.find("span","label",text=re.compile(u"上班地址："))
+   611                                           
+   612         1            1      1.0      0.1              if find_workplace:
+   613         1           71     71.0      4.3                  res = find_workplace.find_previous("p","fp").get_text().strip()
+   614         1            2      2.0      0.1                  res = res[res.find(u"：")+1:]   # 去掉上班地址这几个字
+   615                                           
+   616                                                   else: # 旧版本
+   617                                           
+   618                                                       for line in self.lineDl:
+   619                                                           for tag in line.find_all("dt"):
+   620                                                               if re.search(u"工作地点",tag.get_text()):
+   621                                                                   res = tag.findNext("dd").get_text()
+   622                                                                   break
+   623                                           
+   624         1            3      3.0      0.2          self.result['jdJob']['jobWorkLoc'] = res
+   625                                           
+   626        11          250     22.7     15.3          for word in jieba.cut(self.result['jdInc']['incLocation']):
+   627        10            9      0.9      0.6              word = word.strip().lower()
+   628        10            9      0.9      0.6              if word in self.citydic:
+   629         3            2      0.7      0.1                  resultList.append(word)
+   630                                                   #resultList[0]是所有提取出来的行政区划中最高级别的，如果这个级别至少是市级的
+   631         1            1      1.0      0.1          if resultList and resultList[0] in self.province_city:
+   632         1            1      1.0      0.1              if (len(resultList) >= 2):
+   633         1            1      1.0      0.1                  length = len(resultList)
+   634         1            0      0.0      0.0                  res = ""
+   635         1            1      1.0      0.1                  res = resultList[0]
+   636         3            1      0.3      0.1                  for each in resultList[1:]:
+   637         2            3      1.5      0.2                      res +='-'+each
+   638                                           
+   639         1            1      1.0      0.1                  if(resultList[0][:-1]==resultList[1]):
+   640                                                               resultList[1] ='-'+resultList[1]
+   641                                                               self.result['jdInc']['incCity'] = re.sub(resultList[1],'',res)
+   642                                                           else:
+   643         1            3      3.0      0.2                      self.result['jdInc']['incCity'] = res
+   644                                                       elif (len(resultList)==1):
+   645                                                           self.result['jdInc']['incCity'] = resultList[0]
+   646                                                       else:
+   647                                                           self.result['jdInc']['incCity'] = ""
+   648                                                   #当resultList[0]所提取出来的信息不是省市级的时候，需要采用其他方法来考虑提取城市信息
+   649                                                   #1、按照单词字符的匹配率大于百分之80来判断
+   650                                                   # else:
+   651                                                   #     number = re.compile(u'\w{1,}')
+   652                                                   #     infoincLocation = re.findall(number,self.result['jdInc']['incLocation'])
+   653                                                   #     infojobWorkLoc = re.findall(number,self.result['jdJob']['jobWorkLoc'])
+   654                                                   #     correct = 0
+   655                                                   #     total = 0
+   656                                                   #     for word in infoincLocation:
+   657                                                   #         if word in infojobWorkLoc:
+   658                                                   #             correct+=1
+   659                                                   #         total+=1
+   660                                                   #     rate = 1.0*correct/total
+   661                                                   #     if(rate>=0.80):
+   662                                                   #         self.result['jdInc']['incCity'] = self.result['jdJob']['jobWorkCity']
+   663                                                   #     else:
+   664                                                   #         self.result['jdInc']['incCity'] = ""
+   665                                                   #2、按照jieba分词之后的结果进行匹配
+   666                                                   else:
+   667                                                       infoincLocation = jieba.cut(self.result['jdInc']['incLocation'])
+   668                                                       infojobWorkLoc = jieba.cut(self.result['jdJob']['jobWorkLoc'])
+   669                                                       incLocationList = []
+   670                                                       jobLocationList = []
+   671                                                       for word in infojobWorkLoc:
+   672                                                           incLocationList.append(word)
+   673                                                       for word in infoincLocation:
+   674                                                           jobLocationList.append(word)
+   675                                                       correct = 0
+   676                                                       total = 0
+   677                                                       for word in incLocationList:
+   678                                                           if word in jobLocationList:
+   679                                                               correct+=1
+   680                                                           total+=1
+   681                                                       if total != 0:
+   682                                                           ratio = 1.0 * correct / total
+   683                                                       else:
+   684                                                           ratio = 0
+   685                                                       if(ratio>=0.60):
+   686                                                           self.result['jdInc']['incCity'] = self.result['jdJob']['jobWorkCity']
+   687                                                       else:
+   688                                                           self.result['jdInc']['incCity'] = ""
+   689                                                       for word in jobLocationList:
+   690                                                           if word in incLocationList:
+   691                                                               correct += 1
+   692                                                           total += 1
+   693                                                       if total!=0:
+   694                                                           ratio = 1.0 * correct / total
+   695                                                       else:
+   696                                                           ratio = 0.0
+   697                                                       if (ratio >= 0.60):
+   698                                                           self.result['jdInc']['incCity'] = self.result['jdJob']['jobWorkCity']
+   699                                                       else:
+   700                                                           self.result['jdInc']['incCity'] = ""
+
+Total time: 0.00026 s
+File: jd_parser_51job.py
+Function: regular_pay at line 702
+
+Line #      Hits         Time  Per Hit   % Time  Line Contents
+==============================================================
+   702                                               @profile
+   703                                               def regular_pay(self):
+   704                                                   """
+   705                                                   薪酬工资
+   706                                                   """
+   707         1            0      0.0      0.0          paystr = ""
+   708         1            1      1.0      0.4          if self.find_new_comp: #新版本
+   709         1          247    247.0     95.0              find_pay = self.compsoup.find("p","cname").find_previous("strong")
+   710         1            1      1.0      0.4              if find_pay:
+   711         1            8      8.0      3.1                  paystr = find_pay.get_text().strip()
+   712                                           
+   713                                                   else:
+   714                                                       for line in self.lineDl:
+   715                                                           for tag in line.find_all("dt"):
+   716                                                               if re.search(u"薪资范围",tag.get_text()):
+   717                                                                   paystr = tag.findNext("dd").get_text()
+   718                                                                   break
+   719         1            3      3.0      1.2          self.result['jdJob']["jobSalary"] = paystr
+
+Total time: 0 s
+File: jd_parser_51job.py
+Function: regular_cert at line 721
+
+Line #      Hits         Time  Per Hit   % Time  Line Contents
+==============================================================
+   721                                               @profile
+   722                                               def regular_cert(self):
+   723                                                   """
+   724                                                   证书要求
+   725                                                   """
+   726                                                   res = []
+   727                                                   for line in self.linelist:
+   728                                                       findcert = self.CERT.search(line)
+   729                                                       if findcert and not re.search(u"保证",findcert.group()):
+   730                                                           res.append(findcert.group())
+   731                                                       else:
+   732                                                           findcert = re.search(u"有(.+资格证)",line)
+   733                                                           if findcert and not re.search(u"保证",findcert.group()):
+   734                                                               res.append(findcert.group(1))
+   735                                                   res = re.sub(u"[通过或以上至少]","","|".join(res))
+   736                                                   self.result_job['certList'] = res.split("|")
+
+Total time: 0 s
+File: jd_parser_51job.py
+Function: regular_demand at line 738
+
+Line #      Hits         Time  Per Hit   % Time  Line Contents
+==============================================================
+   738                                               @profile
+   739                                               def regular_demand(self):
+   740                                                   """
+   741                                                   岗位要求
+   742                                                   """
+   743                                           
+   744                                                   jdstr = self.jdstr
+   745                                                   res,linelist = [],[]
+   746                                                   pos = list(self.START_DEMAND.finditer(jdstr))
+   747                                                   if pos:
+   748                                                       linelist = [line.strip() for line in self.SPLIT_LINE.split(jdstr[pos[-1].span()[1]:]) if line.strip()>3]
+   749                                           
+   750                                                   linelist = filter(lambda x:len(x)>2,linelist)
+   751                                           
+   752                                                   for i in range(len(linelist)):
+   753                                                       line = linelist[i]
+   754                                                       if self.START_DEMAND.search(line):
+   755                                                           continue
+   756                                                       if self.START_DUTY.search(line):
+   757                                                           break
+   758                                                       if re.match(u"\d[\.、\s　]|[\(（【][a-z\d][\.、\s　]|[\u25cf\uff0d\u2022]",line) or self.DEMAND.search(line) or self.clf.predict(line)=="demand":
+   759                                                           res.append(self.CLEAN_LINE.sub("",line))
+   760                                                       elif i<len(linelist)-1 and self.clf.predict(linelist[i+1])=="demand":
+   761                                                           res.append(self.CLEAN_LINE.sub("",line))
+   762                                                       else:
+   763                                                           break
+   764                                                   if not res:
+   765                                                       for line in self.linelist:
+   766                                                           if self.clf.predict(line) == "demand":
+   767                                                               res.append(self.CLEAN_LINE.sub("",line))
+   768                                           
+   769                                                   res = [str(i+1)+". "+line for i,line in enumerate(res)]
+   770                                                   self.result["workDemand"] = '\n'.join(res)
+
+Total time: 0 s
+File: jd_parser_51job.py
+Function: regular_duty at line 772
+
+Line #      Hits         Time  Per Hit   % Time  Line Contents
+==============================================================
+   772                                               @profile
+   773                                               def regular_duty(self):
+   774                                                   """
+   775                                                   岗位职责
+   776                                                   """
+   777                                                   jdstr = self.jdstr
+   778                                                   res,linelist = [],[]
+   779                                                   pos = list(self.START_DUTY.finditer(jdstr))
+   780                                                   if pos:
+   781                                                       linelist = [line.strip() for line in self.SPLIT_LINE.split(jdstr[pos[-1].span()[1]:]) if line.strip()>3]
+   782                                           
+   783                                                   linelist = filter(lambda x:len(x)>2,linelist)
+   784                                                   for i in range(len(linelist)):
+   785                                                       line = linelist[i]
+   786                                                       if self.START_DUTY.search(line):
+   787                                                           continue
+   788                                                       if self.START_DEMAND.search(line):
+   789                                                           break
+   790                                           
+   791                                                       if re.match(u"\d[\.、\s　]|[\(（【][a-z\d][\.、\s　]|[\u25cf\uff0d]",line) or self.DUTY.search(line) or self.clf.predict(line)=="duty":
+   792                                                           res.append(self.CLEAN_LINE.sub("",line))
+   793                                                       elif i<len(linelist)-1 and self.clf.predict(linelist[i+1])=="duty":
+   794                                                           res.append(self.CLEAN_LINE.sub("",line))
+   795                                                       else:
+   796                                                           break
+   797                                                   if not res:
+   798                                                       for line in self.linelist:
+   799                                                           if self.clf.predict(line) == "duty":
+   800                                                               res.append(self.CLEAN_LINE.sub("",line))
+   801                                                   res = [str(i+1)+". "+line for i,line in enumerate(res)]
+   802                                                   self.result["workDuty"] = '\n'.join(res)
+
+Total time: 0.000535 s
+File: jd_parser_51job.py
+Function: regular_benefit at line 804
+
+Line #      Hits         Time  Per Hit   % Time  Line Contents
+==============================================================
+   804                                               @profile
+   805                                               def regular_benefit(self):
+   806                                                   """
+   807                                                   福利制度
+   808                                                   """
+   809                                           
+   810         1            1      1.0      0.2          res = []
+   811                                           
+   812         1            2      2.0      0.4          if self.find_new_comp:
+   813         1          292    292.0     54.6              find_benefit = self.basicsoup.find("div","t2")
+   814         1            0      0.0      0.0              if not find_benefit:
+   815         1          234    234.0     43.7                  find_benefit = self.basicsoup.find("p","t2")
+   816         1            1      1.0      0.2              if find_benefit:
+   817                                                           for tag in find_benefit.find_all("span"):
+   818                                                               res.append(tag.get_text().strip())
+   819                                                   else:
+   820                                                       for line in self.lineDl:
+   821                                                           if re.search(u"薪酬福利",line.find("dt").get_text()):
+   822                                                               res.append(line.find("dd").get_text().strip())
+   823                                           
+   824         1            5      5.0      0.9          self.result['jdJob']["jobWelfare"] = '\n'.join(set(list(res)))
+
+Total time: 0.00107 s
+File: jd_parser_51job.py
+Function: regular_other at line 826
+
+Line #      Hits         Time  Per Hit   % Time  Line Contents
+==============================================================
+   826                                               @profile
+   827                                               def regular_other(self):
+   828                                                   """
+   829                                                   关键词，具体上班地址等信息
+   830                                                   """
+   831                                           
+   832         1            1      1.0      0.1          if self.find_new_comp:
+   833         1         1042   1042.0     97.4              find_key_words = self.basicsoup.find_next("div","bmsg job_msg inbox").find("span","label",text=re.compile(u"关键字"))
+   834         1            1      1.0      0.1              if find_key_words:
+   835                                                           tags = [tag.get_text() for tag in find_key_words.find_next_siblings("span") ]
+   836                                                           tags = [item for item in tags if item!=u'']
+   837                                                           self.result['others']["keyWords"] = ' | '.join(tags)
+   838                                           
+   839                                                           #如果没有jobType，从keywords中判断
+   840                                                           if not self.result['jdJob']['jobType']:
+   841                                                               find_job_type = re.search(u"实习|兼职|全职", self.result['others']["keyWords"])
+   842                                                               if find_job_type:
+   843                                                                   self.result["jdJob"]["jobType"] = find_job_type.group()
+   844                                           
+   845                                                   #邮编
+   846         1            5      5.0      0.5          if re.search(u"邮编：(\d{6})",self.result["jdInc"]["incLocation"]):
+   847                                                       #print self.result["jdInc"]["incLocation"]
+   848                                                       self.result["jdInc"]["incZipCode"]=re.search(u"邮编：(\d{6})",self.result["jdInc"]["incLocation"]).group(1)
+   849                                                       self.result['jdInc']['incLocation']=re.sub(u"\(邮编：\d{6}\)",'',self.result['jdInc']['incLocation'])
+   850                                                       # find_workp_detail = self.basicsoup.find_next("span","label",text=re.compile(u"上班地址"))
+   851                                                       # if find_workp_detail:
+   852                                                       #     res["workPlaceDetail"] = re.sub("\s","",find_workp_detail.find_parent("p").get_text())[5:]
+   853                                                   #公司邮箱
+   854         1           12     12.0      1.1          if self.MAIL.search(self.result["jdInc"]["incIntro"]):
+   855                                                       self.result['jdJob']["email"]=self.MAIL.search(self.result["jdInc"]["incIntro"]).group()
+   856         1            8      8.0      0.7          elif self.MAIL.search(self.result["jdJob"]["jobDesc"]):
+   857                                                       self.result['jdJob']["email"] = self.MAIL.search(self.result["jdJob"]["jobDesc"]).group()
+   858                                           
+   859                                                   #如果前面没有找到incUrl，那么在此处再去判断一下incIntro和jobDesc里面是否有公司网址
+   860         1            1      1.0      0.1          if not self.result['jdInc']['incUrl']:
+   861                                                       intro = self.result['jdInc']['incIntro'].split('\n')
+   862                                                       for line in intro:
+   863                                                           # print '*'*50
+   864                                                           # if re.search(u'公司官网：网址：|网站：|主页：',line):
+   865                                                           #     self.result['jdInc']['incUrl'] = line[line.find(u'：') + 1:]
+   866                                                           #     return
+   867                                           
+   868                                                           if re.search(u'公司官网：|网址：|网站：|主页：', line):
+   869                                                               url = re.compile(
+   870                                                                   u'(http:.*?\.cn|http:.*?\.com|http:.*?\.org|www.*?\.com|www.*?\.cn|http:.*?\.html|http:.*?\.shtml)')
+   871                                                               if re.search(url, line):
+   872                                                                   if len(re.findall(url, line)) >= 1:
+   873                                                                       for item in re.findall(url, line):
+   874                                                                           self.result['jdInc']['incUrl'] += item + u' '
+   875                                                                       break
+   876                                                           if not self.result['jdInc']['incUrl']:
+   877                                                               self.result['jdInc']['incUrl'] = ""
+   878                                           
+   879                                           
+   880                                                               intro = self.result['jdJob']['jobDesc'].split('\n')
+   881                                                               for line in intro:
+   882                                                                   if re.search(u'公司官网：网址：|网站：|主页：', line):
+   883                                                                       url = re.compile(u'(http:.*?\.cn|http:.*?\.com|http:.*?\.org|www.*?\.com|www.*?\.cn|http:.*?\.html|http:.*?\.shtml)')
+   884                                                                       if re.search(url,line):
+   885                                                                           if len(re.findall(url,line))>=1:
+   886                                                                               for item in re.findall(url,line):
+   887                                                                                   self.result['jdInc']['incUrl'] += item + u' '
+   888                                                                               return
+
+Total time: 0.0027 s
+File: jd_parser_51job.py
+Function: job_desc_process at line 897
+
+Line #      Hits         Time  Per Hit   % Time  Line Contents
+==============================================================
+   897                                               @profile
+   898                                               #职位信息的格式处理  zhangzq 20160308
+   899                                               def job_desc_process(self,src_str):
+   900         2           86     43.0      3.2          src_str = re.sub(u'\n',u'`',src_str)
+   901         2         2496   1248.0     92.4          src_str = re.sub(u'职能类别：.*|关键字:.*|举报`分享',u'',src_str)
+   902         2           34     17.0      1.3          src_str = re.sub(u'\s+',u' ',src_str)
+   903         2           84     42.0      3.1          return re.sub(u'`',u'\n',src_str)
+
+Total time: 0 s
+File: jd_parser_51job.py
+Function: location_exchange at line 905
+
+Line #      Hits         Time  Per Hit   % Time  Line Contents
+==============================================================
+   905                                               @profile
+   906                                               #公司地址与工作地址交换   zhangzq 20160309
+   907                                               def location_exchange(self):
+   908                                                   self.result_inc["incworkdetail"],self.result_job["jobWorkLoc"] = self.result_job["jobWorkLoc"],self.result_inc["incworkdetail"]
+
+Total time: 0 s
+File: jd_parser_51job.py
+Function: parser_basic at line 910
+
+Line #      Hits         Time  Per Hit   % Time  Line Contents
+==============================================================
+   910                                               @profile
+   911                                               def parser_basic(self,htmlContent="",fname=None,url=None):
+   912                                                   """
+   913                                                   基本解析，简单抽取信息
+   914                                                   """
+   915                                                   self.preprocess(htmlContent,fname,url)
+   916                                                   self.regular_incname()
+   917                                                   self.regular_inc_tag()
+   918                                                   self.regular_pubtime()
+   919                                                   self.regular_jobname()
+   920                                                   self.regular_job_tag()
+   921                                                   self.regular_pay()
+   922                                                   self.regular_degree()
+   923                                                   self.regular_major()
+   924                                                   self.regular_exp()
+   925                                                   self.regular_language()
+   926                                                   self.regular_workplace()
+   927                                                   self.regular_benefit()
+   928                                                   self.regular_other()
+   929                                           
+   930                                                   return self.result
+
+Total time: 0 s
+File: jd_parser_51job.py
+Function: parser_detail at line 932
+
+Line #      Hits         Time  Per Hit   % Time  Line Contents
+==============================================================
+   932                                               @profile
+   933                                               def parser_detail(self,htmlContent="",fname=None,url=None):
+   934                                                   """
+   935                                                   进一步简单语义解析
+   936                                                   """
+   937                                                   self.preprocess(htmlContent,fname,url)
+   938                                                   self.regular_exp()
+   939                                                   self.regular_incname()
+   940                                                   self.regular_inc_tag()
+   941                                                   self.regular_pubtime()
+   942                                                   self.regular_jobname()
+   943                                                   self.regular_job_tag()
+   944                                                   self.regular_pay()
+   945                                                   self.regular_degree()
+   946                                                   #self.regular_demand()
+   947                                                   self.regular_sex()
+   948                                                   self.regular_age()
+   949                                                   self.regular_major_detail()
+   950                                                   # self.regular_skill()
+   951                                                   # self.regular_cert()
+   952                                           
+   953                                                   self.regular_exp()
+   954                                                   self.regular_language()
+   955                                                   self.regular_workplace()
+   956                                                   self.regular_benefit()
+   957                                                   self.regular_other()
+   958                                           
+   959                                           
+   960                                           
+   961                                           
+   962                                                   return self.result
+

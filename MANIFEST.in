@@ -1,0 +1,6 @@
+include requirements.txt
+include src/ipin/parser/jd_parser/jdclf/id
+include src/ipin/parser/jd_parser/jdclf/learner/*
+include src/ipin/parser/jd_parser/jdclf/converter/*
+include src/ipin/parser/jd_parser/data/*.txt
+prune src/ipin/parser/jd_parser/test_jds

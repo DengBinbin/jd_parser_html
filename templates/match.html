@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<meta charset="utf-8" >
+	<title>技能在线抽取</title>
+	<link rel = "stylesheet" href="http://cdn.amazeui.org/amazeui/2.4.0/css/amazeui.min.css">
+    <link rel = "icon" href="head.ico" >
+
+    <script>
+        function get_result(){
+            document.getElementById("res_hint").innerHTML='<div class="am-active">'+'解析结果：'+'</div>';
+            return true
+        }
+    </script>
+</head>
+<body>
+	<div class="am-topbar">
+	<h1 class="am-active"> &nbsp;&nbsp;&nbsp;jd技能匹配在线演示</h1>
+	</div>
+	<div class="am-g">
+		<div class="am-u-sm-10 am-u-sm-centered">
+            <div class="am-intro-left am-active" style="height:180px">
+                <label ><em>使用说明</em></label>
+                <p class="am-serif">左边输入jd，右边输入cv,分别抽取技能，并最后显示它们的相似度</p>
+            </div>
+
+			<form class="am-form am-form-horizontal" role="form" enctype="multipart/form-data" method="post" onsubmit="return get_result()">    	    
+            <div class="am-u-sm-6">
+                <textarea class="am-form-field am-radius" name="jd" rows="20" cols="100" placeholder="input job description here" autofocus="True"}} >{{jd}}</textarea>			   
+            </div>
+            			
+            <div class="am-u-sm-6">              
+                <textarea class="am-form-field am-radius" name="cv" rows="20" cols="100" placeholder="input resume here" >{{cv}}</textarea>               
+            </div>
+	        </div>
+	        <div style="clear:both"><br/></div>
+	        <div class="am-u-sm-centered" style="text-align:center">
+	              <button type="submit" onclick="get_result()" class="am-btn am-btn-primary" value="提交">submit</button>
+	        </div>
+	        </form>
+	       
+		</div>
+		<br />
+		<div class="am-u-sm-6 am-u-sm-centered">
+		<div id='res_hint'></div>
+		<div id="result">
+        {% for k,v in result.iteritems() %}
+        	{{ k }}
+        	<pre> {{ v }}</pre>
+        {%end%}            
+	</div>
+	<script type="text/javascript" src="http://cdn.amazeui.org/amazeui/2.4.0/js/amazeui.min.js"</script>
+</body>
+</html>

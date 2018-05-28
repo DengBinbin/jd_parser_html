@@ -1,0 +1,6 @@
+tgrocery
+beautifulsoup4
+lxml
+jieba
+simplejson
+requests

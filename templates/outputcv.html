@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<meta charset="utf-8" >
+	<title>58同城cv解析</title>
+	<link rel = "stylesheet" href="http://cdn.amazeui.org/amazeui/2.4.0/css/amazeui.min.css">
+	<link rel = "icon" href="head.ico" >
+
+	<script>
+		function get_result(){
+			document.getElementById("res_hint").innerHTML='<div class="am-form-label am-active">'+'正在生成结果，请稍等...'+'</div>';
+			return true
+		}
+	</script>
+</head>
+<body>
+	<div class="am-topbar">
+		<h1 class="am-active">   在线演示</h1>
+	</div>
+	<div class="am-g">
+		<div class="am-u-sm-8 am-u-sm-centered">
+			<div class="am-intro-left am-active" style="height:120px">
+				<label ><em>使用说明</em></label>
+				<p class="am-serif">输入58同城简历url，再点击提交，可获得cv解析结果。<a href="http://jianli.58.com/" title="cv解析" target="_blank">58同城简历</a></p><br />
+			</div>
+			<form class="am-form-inline" role="form" action="/cvparser" method="post">
+				<label>58简历url(only):</label>
+				<input class="am-form-field am-radius" type="url" name="source" style="width:70%" placeholder="input url here" autofocus="True" value={{source}}></input>
+				<button type="submit" onclick="get_result()" class="am-btn am-btn-primary" value="提交">submit</button>
+			</form>
+		</div>
+
+		<div class="am-u-sm-8 am-u-sm-centered">
+			<div class="am-danger" id='res_hint' style="color:#c60a00">解析结果<br/></div>
+            <div>
+                <pre title="解析结果">{{result}}</pre>
+			</div>
+		</div>
+	</div>
+    <script type="text/javascript" src="http://cdn.amazeui.org/amazeui/2.4.0/js/amazeui.min.js"></script>
+</body>
+</html>

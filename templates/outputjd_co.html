@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<meta charset="utf-8" >
+	<title>html -jd解析</title>
+	<link rel = "stylesheet" href="http://cdn.amazeui.org/amazeui/2.4.0/css/amazeui.min.css">
+	<link rel = "icon" href="head.ico" >
+
+	<script>
+		function get_result(){
+			document.getElementById("res_hint").innerHTML='<div class="am-form-label am-active">'+'正在生成结果，请稍等...'+'</div>';
+			return true
+		}
+	</script>
+</head>
+<body>
+	<div class="am-topbar">
+		<h1 class="am-active">  jd解析在线演示</h1>
+	</div>
+	<div class="am-g">
+		<div class="am-u-sm-10 am-u-sm-centered">
+            <div class="am-intro-left am-active" style="height:210px">
+                <label ><em>使用说明</em></label>
+                <p class="am-serif">输入拉钩，智联，51job,职友集网的职业招聘页面url，再点击提交，可获得jd解析结果。<br>
+                    相关职位招聘链接地址：　</p>
+                <p>JD界面：    <a href="http://www.lagou.com/" title="jd解析" target="_blank">lagou拉勾</a> |
+                   <a href="http://jobs.51job.com/" title="jd解析" target="_blank">51job</a> |
+                   <a href="http://sou.zhaopin.com/jobs/searchresult.ashx" target="_blank" title="jd解析">智联招聘</a> |
+                   <a href="http://www.liepin.com/zhaopin/" target="_blank" title="jd解析" target="_blank">猎聘网</a> |
+                   <a href="http://sz.58.com/job/" target="_blank" title="jd解析" target="_blank">58同城</a> |
+                   <a href="http://www.jobui.com/jobs/" target="_blank" title="jd解析" target="_blank">职友集网</a> |
+                   <a href="http://www.highpin.cn/jobs/" target="_blank" title="jd解析" target="_blank">卓聘网</a><br>
+                    公司界面：   <a href="http://www.lagou.com/gongsi/" title="jd解析" target="_blank">lagou拉勾</a> |
+                   <a href="http://jobs.51job.com/all/" title="jd解析" target="_blank">51job</a> |
+                   <a href="http://company.zhaopin.com/" target="_blank" title="jd解析">智联招聘</a> |
+                   <a href="https://www.liepin.com/sitemap/zhuceqiye.shtml" target="_blank" title="jd解析" target="_blank">猎聘网</a> |
+                   <a href="http://sz.58.com/job/" target="_blank" title="jd解析" target="_blank">58同城</a> |
+                   <a href="http://www.jobui.com/industry/" target="_blank" title="jd解析" target="_blank">职友集网</a> |
+                   <a href="http://www.highpin.cn/jobs/" target="_blank" title="jd解析" target="_blank">卓聘网</a><br>
+                     校招界面：   <a href="http://www.yjbys.com/zhaopin/" title="jd解析" target="_blank">应届毕业生普通招聘</a> |
+                   <a href="http://www.yjbys.com/mingqi/" title="jd解析" target="_blank">应届毕业生名企</a> |
+                   <a href="http://www.yingjiesheng.com/" target="_blank" title="jd解析">应届生求职网</a> |
+                   <a href="http://campus.dajie.com/" target="_blank" title="jd解析" target="_blank">大街网</a> |
+                   <a href="http://xiaoyuan.zhaopin.com/" target="_blank" title="jd解析" target="_blank">智联校招</a>
+                </p>
+            </div>
+
+            <div>
+                <form class="am-form-inline" role="form" enctype="multipart/form-data" action="/jdparser" method="post">
+                    <label>职位描述url(only):</label>
+                    <div class="am-input-group am-input-group-primary">
+                        <input class="am-form-field am-radius" type="url" name="source" style="width:70%" placeholder="input url here" autofocus="True" ></input>
+                    </div>
+                    <div class="am-radio">
+                        <label><input type="radio" name="type" value="jd_simple" >基本解析</label>
+                        <label><input type="radio" name="type" value="jd_detail" >详尽解析</label>
+                        <label><input type="radio" name="type" value="co">公司解析</label>
+                        <label><input type="radio" name="type" value="xiaozhao" checked>校招解析</label>
+                    </div>
+                    <input type="file" name="jdfile" accept="text/html" title="或上传html文件" /> <br />
+                    <div class="am-form-group">
+                        <button type="submit" onclick="get_result()" class="am-btn am-btn-primary" value="提交">submit</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <hr />
+    <div style="clear:both"></div>
+    <div class="am-g">
+		<div class="am-u-sm-12 am-u-sm-centered">
+            <div class="am-u-sm-6">
+			    <div class="am-danger" id='res_hint' style="color:#c60a00">原jd内容<br/></div>
+                {%if source and len(source)>200%}
+                <div style="z-index:-1; overflow:hidden">{{source}}</div>
+                {%else%}
+                <iframe src={{source}} width="800" height="1000" name="iframe_a"></iframe>
+                {%end%}
+            </div>
+
+            <div class="am-u-sm-6">
+                <div class="am-danger" style="color:#c60a00">解析结果<br/></div>
+                <div style="z-index:9999">
+                    {% if logo %}
+                    <p>
+                    公司logo：
+                        {% if logo.startswith('http') %}
+                        <!--<br> <img class="cimg" width="120" height="120" src='{{logo}}' alt="公司logo" align="bottom"><br>-->
+                        <br> <img class="cimg"  src='{{logo}}' alt="公司logo" align="bottom"><br>
+
+                        {% else %}
+                        <!--<br> <img class="cimg" width="120" height="120" src='{{static_url(logo)}}' alt="公司logo" align="bottom"><br>-->
+                        <br> <img class="cimg"  src='{{static_url(logo)}}' alt="公司logo" align="bottom"><br>
+
+                        {% end %}
+                        </p>
+                    {%  end %}
+
+                    {% if photo %}
+                    <p>
+                    公司简介图片：<br>
+                        {% for pic in photo %}
+                            {% if pic.startswith('http') %}
+                            <!--<img class="cimg" width="120" height="120" src='{{pic}}' alt="招聘图片" align="bottom" style="margin: 0px 30px">-->
+                            <img class="cimg" src='{{pic}}' alt="招聘图片" align="bottom" style="margin: 0px 30px">
+                            {% else %}
+                            <!--<img class="cimg" width="120" height="120" src='{{static_url(pic)}}' alt="招聘图片" align="bottom" style="margin: 0px 30px">-->
+                            <img class="cimg"  src='{{static_url(pic)}}' alt="招聘图片" align="bottom" style="margin: 0px 30px">
+                            {% end %}
+                           {% end %}
+                    </p>
+                    {%  end %}
+                    <pre title="解析结果">{{result}}</pre>
+
+
+                </div>
+            </div>
+        </div>
+    </div>
+    <script type="text/javascript" src="http://cdn.amazeui.org/amazeui/2.4.0/js/amazeui.min.js"></script>
+</body>
+</html>

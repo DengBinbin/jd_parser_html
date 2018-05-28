@@ -1,0 +1,14 @@
+target/
+*py~
+*~
+*pyc
+*npy
+*.pyc
+.idea
+.lib
+*.xls
+src/ipin/parser/jd_parser/test_jds
+src/ipin/parser/jd_parser/pkl
+#*.html
+*.pkl
+*.p
