@@ -32,34 +32,8 @@
     - http调用接口:   
 
 
-    ```python
-    import sys
-sys.path.append("./src/ipin/parser/jd_parser/")
-from api.api_jd_parser import JdParser
-from utils.path import *
-import codecs
-test = JdParser()
-htmlContent1 = codecs.open(jd_path+'lagou/1.html').read()
-htmlContent2 = codecs.open(co_path+'lagou/1.html').read()
-result1 = test.parser(htmlContent=htmlContent1,jdFrom="lagou",type="jd_detail")
-result2 = test.parser(htmlContent=htmlContent2,jdFrom="lagou",type="co")
-import json
-print json.dumps(result1,ensure_ascii=False,indent=4)
-print json.dumps(result2,ensure_ascii=False,indent=4)
-    ```  
+```python
 
-
-
-## 二. 接口部署本地安装及使用   
-
-
-1. 下载源码到本地 git clone 
-2. cd ./thrift_api_install_first/common_gen_py/  `sudo python setup.py install`
-3. cd ./thrift_api_install_first/etl_gen_py/    ` sudo python setup.py install`
-4. 安装api_jd_parser接口 python setup.py install --user
-5. 使用: 
-    
-    ```python
 import sys
 sys.path.append("./src/ipin/parser/jd_parser/")
 from api.api_jd_parser import JdParser
@@ -73,16 +47,44 @@ result2 = test.parser(htmlContent=htmlContent2,jdFrom="lagou",type="co")
 import json
 print json.dumps(result1,ensure_ascii=False,indent=4)
 print json.dumps(result2,ensure_ascii=False,indent=4)
-    ```
+
+```  
+
+
+
+## 二. 接口部署本地安装及使用   
+
+
+1. 下载源码到本地 git clone 
+2. cd ./thrift_api_install_first/common_gen_py/  `sudo python setup.py install`
+3. cd ./thrift_api_install_first/etl_gen_py/    ` sudo python setup.py install`
+4. 安装api_jd_parser接口 python setup.py install --user
+5. 使用: 
+    
+```python
+import sys
+sys.path.append("./src/ipin/parser/jd_parser/")
+from api.api_jd_parser import JdParser
+from utils.path import *
+import codecs
+test = JdParser()
+htmlContent1 = codecs.open(jd_path+'lagou/1.html').read()
+htmlContent2 = codecs.open(co_path+'lagou/1.html').read()
+result1 = test.parser(htmlContent=htmlContent1,jdFrom="lagou",type="jd_detail")
+result2 = test.parser(htmlContent=htmlContent2,jdFrom="lagou",type="co")
+import json
+print json.dumps(result1,ensure_ascii=False,indent=4)
+print json.dumps(result2,ensure_ascii=False,indent=4)
+```
 
 
 
 ## 三. 演示demo： 
 
 
-http://192.168.1.94:8081/jdparser  
+localhost:8081/jdparser  
 
 ---
 
 >> by-　dengbinbin@ipin.com
->> @2016.07
+>> @2016.08
