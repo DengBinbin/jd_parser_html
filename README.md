@@ -3,7 +3,6 @@
 1. 作用：对输入的半结构化ＪＤ、CO文本解析解析为结构化的文本。  
 2. 原理：使用句子分类器＋规则＋相关词库匹配生成。  
 3. *演示地址: localhost:8081/jdparser*  
-![enter description here](./images/2018-05-28 21:25:17屏幕截图_1.png)
 4. 输入与输出  
     - 输入：2个参数  
     --1. htmlContent : lagou,liepin,51job,智联,职友集，智联卓聘的招聘html转换为unicode编码后的内容**不包括智联、猎聘的校招**  
